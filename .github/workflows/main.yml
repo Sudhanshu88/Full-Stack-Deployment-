@@ -64,7 +64,7 @@ jobs:
       - name: Pull & Deploy on EC2
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
-            cd devops-assessment-main
+            cd /home/ubuntu/Full-Stack-Deployment-/devops-assessment-main
 
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
