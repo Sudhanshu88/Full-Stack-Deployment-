@@ -30,8 +30,8 @@ jobs:
       - name: Build & Push Backend Image
         uses: docker/build-push-action@v5
         with:
-          context: ./backend
-          file: ./backend/Dockerfile
+          context: ./devops-assessment-main/backend
+          file: ./devops-assessment-main/backend/Dockerfile
           push: true
           tags: |
             ${{ env.BACKEND_IMAGE }}:latest
@@ -40,8 +40,8 @@ jobs:
       - name: Build & Push Frontend Image
         uses: docker/build-push-action@v5
         with:
-          context: ./frontend
-          file: ./frontend/Dockerfile
+          context: ./devops-assessment-main/frontend
+          file: ./devops-assessment-main/frontend/Dockerfile
           push: true
           tags: |
             ${{ env.FRONTEND_IMAGE }}:latest
@@ -64,6 +64,8 @@ jobs:
       - name: Pull & Deploy on EC2
         run: |
           ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
+            cd devops-assessment-main
+
             echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
             docker pull ${{ env.BACKEND_IMAGE }}:latest
