@@ -1,32 +1,40 @@
-# -------- Stage 1: Build dependencies --------
+
 FROM python:3.11-slim AS builder
+
+ENV PYTHONDONTWRITEBYTECODE=1
+ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y build-essential && rm -rf /var/lib/apt/lists/*
+# Install build dependencies
+RUN apt-get update \
+    && apt-get install -y build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt .
-RUN pip wheel --no-cache-dir --no-deps --wheel-dir /wheels -r requirements.txt
+# Copy dependency file
+COPY requirement.txt .
+
+# Upgrade pip and build wheels
+RUN pip install --upgrade pip \
+    && pip wheel --no-cache-dir --no-deps -r requirement.txt -w /wheels
 
 
-# -------- Stage 2: Runtime image --------
+# ================================
+# Stage 2: Runtime
+# ================================
 FROM python:3.11-slim
 
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Create non-root user
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
-
 WORKDIR /app
 
+# Install runtime dependencies only (from wheels)
 COPY --from=builder /wheels /wheels
-RUN pip install --no-cache /wheels/*
+RUN pip install --no-cache-dir /wheels/*
 
+# Copy application source code
 COPY . .
-
-RUN chown -R appuser:appgroup /app
-USER appuser
 
 EXPOSE 8000
 
