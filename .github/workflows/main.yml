@@ -1,4 +1,4 @@
-name: CI/CD Pipeline - Full Stack Deployment
+name: CI Pipeline - Full Stack Deployment
 
 on:
   push:
@@ -47,30 +47,4 @@ jobs:
             ${{ env.FRONTEND_IMAGE }}:latest
             ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
 
-  deploy:
-    name: Deploy Application to AWS EC2
-    needs: build-and-push
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up SSH key
-        uses: webfactory/ssh-agent@v0.7.0
-        with:
-          ssh-private-key: ${{ secrets.AWS_EC2_KEY }}
-
-      - name: Pull & Deploy on EC2
-        run: |
-          ssh -o StrictHostKeyChecking=no ubuntu@${{ secrets.AWS_EC2_HOST }} << 'EOF'
-            cd /home/ubuntu/Full-Stack-Deployment-/devops-assessment-main
-
-            echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
-
-            docker pull ${{ env.BACKEND_IMAGE }}:latest
-            docker pull ${{ env.FRONTEND_IMAGE }}:latest
-
-            docker-compose down || true
-            docker-compose up -d
-          EOF
+  
