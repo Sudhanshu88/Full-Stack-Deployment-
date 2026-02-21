@@ -1,0 +1,38 @@
+# -------- Stage 1: Build --------
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# -------- Stage 2: Serve with nginx --------
+FROM nginx:alpine
+
+# Create non-root user
+RUN addgroup -S appgroup && adduser -S appuser -G appgroup
+
+# Copy build output
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Fix permissions for nginx runtime
+RUN chown -R appuser:appgroup \
+    /usr/share/nginx/html \
+    /var/cache/nginx \
+    /etc/nginx
+
+# Remove user directive (non-root runtime)
+RUN sed -i '/^user\s\+/d' /etc/nginx/nginx.conf
+
+# Redirect PID file to writable location
+RUN sed -i 's|/run/nginx.pid|/tmp/nginx.pid|g' /etc/nginx/nginx.conf
+
+# Switch to non-root user
+USER appuser
+
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]
